@@ -20,6 +20,7 @@ message ProcuraMedicoRequest {
 message ProcuraMedicoResponse {
     string end_maquina = 1; // Pode ser o nome ou endereço IP da maquina
     int32 porto = 2;
+    float id_medico = 3;
 }
 
 message RegistraMedicoRequest {
