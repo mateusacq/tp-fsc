@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.ambulatorio";
+option java_outer_classname = "AmbulatorioProto";
+option objc_class_prefix = "HLW";
+
+package ambulatorio;
+
+service AmbulatorioService {
+  rpc ProcuraMedico (ProcuraMedicoRequest) returns (ProcuraMedicoResponse) {}
+  rpc RegistraMedico (RegistraMedicoRequest) returns (RegistraMedicoResponse) {}
+  rpc ChamaPaciente (ChamaPacienteRequest) returns (ChamaPacienteResponse) {}
+  rpc Termino (TerminoRequest) returns (TerminoResponse);
+}
+
+message ProcuraMedicoRequest {
+    float id_paciente = 1;
+}
+message ProcuraMedicoResponse {
+    string end_maquina = 1; // Pode ser o nome ou endereço IP da maquina
+    int32 porto = 2;
+}
+
+message RegistraMedicoRequest {
+    float id_medico = 1;
+    int32 porto = 2;
+}
+message RegistraMedicoResponse {
+    int32 return_code = 1;
+}
+
+message ChamaPacienteRequest {
+    float id_medico = 1;
+}
+message ChamaPacienteResponse {
+    float id_prox_paciente = 1;
+}
+
+message TerminoRequest {}
+message TerminoResponse {
+    int32 finish_code = 1;
+}

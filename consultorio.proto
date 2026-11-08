@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.consultorio";
+option java_outer_classname = "ConsultorioProto";
+option objc_class_prefix = "HLW";
+
+package consultorio;
+
+service ConsultorioService {
+  rpc Consulta (ConsultaRequest) returns (ConsultaResponse) {}
+}
+
+message ConsultaRequest {
+    float id_paciente = 1;
+    string desc_problema = 2;
+}
+
+message ConsultaResponse {
+    float id_medico = 1; // Retorno obtido apos termino da consulta
+}
