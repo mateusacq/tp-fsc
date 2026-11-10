@@ -40,5 +40,5 @@ message ChamaPacienteResponse {
 
 message TerminoRequest {}
 message TerminoResponse {
-    int32 finish_code = 1;
+    int32 n_liberados = 1;
 }
