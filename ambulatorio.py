@@ -1,12 +1,11 @@
 import sys
 import grpc
 import mytimer
-import warnings
 import threading
-import ipaddress
+
 import ambulatorio_pb2
 import ambulatorio_pb2_grpc
-from typing import Optional
+
 from concurrent import futures
 
 def split_peer(addr_str: str):
@@ -224,6 +223,18 @@ class AmbulatorioService(ambulatorio_pb2_grpc.AmbulatorioServiceServicer):
             mytimer.tstamp_msg(f"ATER -> {n_liberados}")
             return ambulatorio_pb2.TerminoResponse(n_liberados=n_liberados)
 
+def parse_args():
+    args = sys.argv[1:]
+    if len(args) != 3:
+        print("Uso: python ambulatorio.py n_cadeiras n_medicos port")
+        sys.exit(1)
+
+    try:
+        return (int(args[0]), int(args[1]), args[2])
+    except ValueError:
+        print("Erro: dois primeiros argumentos devem ser inteiros")
+        sys.exit(1)
+
 def serve(port, n_cadeiras, n_medicos):
     stop_server = threading.Event()
 
@@ -238,11 +249,7 @@ def serve(port, n_cadeiras, n_medicos):
     server.stop(1)
 
 def main():
-    args = sys.argv[1:]
-
-    n_cadeiras = int(args[0])
-    n_medicos = int(args[1])
-    port = args[2]
+    n_cadeiras, n_medicos, port = parse_args()
 
     mytimer.tstamp_msg(f"AI({n_cadeiras},{n_medicos})@{port}")
 
