@@ -219,36 +219,39 @@ class AmbulatorioService(ambulatorio_pb2_grpc.AmbulatorioServiceServicer):
         """
         Libera médicos e pacientes (processando valor de retorno) e depois
         espera todas as threads encerrarem para terminar o servidor.
+        Este método (e apenas ele) usa o self.cond.wait() atrelado ao self.lock global
+        para aguardar o esvaziamento das chamadas ativas (possui um notify_all() atrelado).
+        Demais metodos usam Condition() do prontuário (p.cond).
         """
         mytimer.tstamp_msg("ATEI")
 
-        with self.lock:
-            self.encerrando = True
-            n_liberados = 0
+        try:
+            with self.lock:
+                self.encerrando = True
+                n_liberados = 0
 
-            while (not self.fila_medicos.empty()):
-                p = self.fila_medicos.dequeue()
-                p.id_paciente = 0.0
-                p.pronto = True
-                p.cond.notify()
-                n_liberados += 1
+                while (not self.fila_medicos.empty()):
+                    p = self.fila_medicos.dequeue()
+                    p.id_paciente = 0.0
+                    p.pronto = True
+                    p.cond.notify()
+                    n_liberados += 1
 
-            while (not self.fila_pacientes.empty()):
-                p = self.fila_pacientes.dequeue()
-                p.id_medico = 0.0
-                p.pronto = True
-                p.cond.notify()
-                n_liberados -= 1
+                while (not self.fila_pacientes.empty()):
+                    p = self.fila_pacientes.dequeue()
+                    p.id_medico = 0.0
+                    p.pronto = True
+                    p.cond.notify()
+                    n_liberados -= 1
 
-            # O método Termino (e apenas ele) usa o self.cond.wait() atrelado ao self.lock global para aguardar
-            # o esvaziamento das chamadas ativas (possui um notify_all() atrelado).
-            # Demais metodos usam Condition() do prontuário (p.cond)
-            while self.chamadas_ativas > 0:
-                self.cond.wait()
+                while self.chamadas_ativas > 0:
+                    self.cond.wait()
 
-            mytimer.tstamp_msg(f"ATER -> {n_liberados}")
+                mytimer.tstamp_msg(f"ATER -> {n_liberados}")
+                return ambulatorio_pb2.TerminoResponse(n_liberados=n_liberados)
+        finally:
+            # Este bloco é executado antes do return, garantindo que servidor gRPC receberá sinal Event() para desligar
             self.stop_event.set()
-            return ambulatorio_pb2.TerminoResponse(n_liberados=n_liberados)
 
 def parse_args():
     args = sys.argv[1:]
