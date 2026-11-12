@@ -24,7 +24,7 @@ def main():
 
     mytimer.tstamp_msg(f"PI({id_paciente:4.1f},{desc_problema})")
 
-    # Procura por um médico
+    # Abre conexão de cliente e procura por um médico
     with grpc.insecure_channel(f"{endereco}:{port}") as channel:
         stub = AmbulatorioServiceStub(channel)
         resp = stub.ProcuraMedico(ProcuraMedicoRequest(id_paciente=id_paciente))
@@ -34,17 +34,20 @@ def main():
         id_medico = resp.id_medico
         mytimer.tstamp_msg(f"PPMR({endereco}:{porto})")
 
+        # Fila cheia sinalizada em retorno de porto == 0
         if porto == 0:
-            # mytimer.tstamp_msg(f"PT -> {id_medico:4.1f}") # Não sei se essa parte deve ser impressa ainda
-            sys.exit(0) # Fila cheia leva o paciente a encerrar e ir embora
+            sys.exit(0) # Paciente encerra e vai embora
 
     # Participa da consulta
     with grpc.insecure_channel(f"{endereco}:{porto}") as channel:
         stub = ConsultorioServiceStub(channel)
         resp = stub.Consulta(
             ConsultaRequest(
-                id_paciente=id_paciente, desc_problema=desc_problema))
+                id_paciente=id_paciente, desc_problema=desc_problema
+            )
+        )
 
+        # Paciente termina e vai embora
         id_medico = resp.id_medico
         mytimer.tstamp_msg(f"PT -> {id_medico:4.1f}")
 

@@ -11,7 +11,14 @@ import ambulatorio_pb2_grpc
 from concurrent import futures
 
 class ConsultorioService(consultorio_pb2_grpc.ConsultorioServiceServicer):
-    """Classe para os métodos e atributos do servidor do consultório (médico)"""
+    """
+    Classe para os métodos e atributos do servidor do consultório.
+    Semáforos que permitirão exclusão mútua entre thread principal
+    do médico (cliente) e thread do servidor do consultório foram usados.
+    Semáforos foram preferidos aqui às variáveis de condição e mutexes
+    pois elas não têm memória e exigem booleanos testados em loops while,
+    o que exigiria muitas declarações de variáveis.
+    """
     def __init__(self, id_medico):
         self.id_medico = id_medico
 
@@ -19,21 +26,24 @@ class ConsultorioService(consultorio_pb2_grpc.ConsultorioServiceServicer):
         self.paciente_registrado = threading.Semaphore(0) # gRPC -> main
         self.consulta_terminou = threading.Semaphore(0) # main -> gRPC
 
-        # Dados que serão enviados para o médico
+        # Dados que serão enviados para thread principal do médico
         self.shared_id_paciente = 0.0
         self.shared_desc_problema = ""
 
     def Consulta(self, request, context):
+        """
+        Método que implementa a consulta, chamado pelo cliente do paciente.
+        """
         mytimer.tstamp_msg(f"CI({request.id_paciente:4.1f},{request.desc_problema})")
 
-        # Aguarda a porta ser aberta para entrar
+        # Paciente aguarda a porta ser aberta na thread principal do médico para entrar
         self.porta_aberta.acquire()
 
-        # Registra paciente
+        # Paciente se registra
         self.shared_id_paciente = request.id_paciente
         self.shared_desc_problema = request.desc_problema
 
-        # Avisa o méidco na thread principal do fim da consulta
+        # Paciente avisa o méidco de seu registro
         self.paciente_registrado.release()
 
         # Espera final da consulta feita na thread principal do médico
@@ -53,10 +63,10 @@ def parse_args():
         print("Erro: argumentos devem ser dos tipos int, float, float, str, int")
         sys.exit(1)
 
-def serve(port, id):
-    # max_workers definido como 1 thread apenas, para só ocorrer 1 consulta por vez
+def serve(port, servico):
+    # max_workers definido como 1 apenas, para só ocorrer 1 consulta por vez
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
-    consultorio_pb2_grpc.add_ConsultorioServiceServicer_to_server(ConsultorioService(id), server)
+    consultorio_pb2_grpc.add_ConsultorioServiceServicer_to_server(servico, server)
     server.add_insecure_port("[::]:" + str(port))
 
     server.start()
@@ -66,10 +76,11 @@ def serve(port, id):
 def main(): # Thread principal do médico
     porta_consultorio, id_medico, tempo, endereco, porta_ambulatorio = parse_args()
 
-    # Inicia servidor médico (consultório)
-    server = serve(porta_consultorio, id_medico)
+    # Inicia servidor médico (consultório) (disparado em segundo plano, execução continua)
+    servico = ConsultorioService(id_medico) # Salva objeto do serviço para acessar semáforos depois
+    server = serve(porta_consultorio, servico)
 
-    # Inicia cliente médico, registrando-o
+    # Inicia cliente médico com registro
     with grpc.insecure_channel(f"{endereco}:{porta_ambulatorio}") as channel:
         stub = ambulatorio_pb2_grpc.AmbulatorioServiceStub(channel)
         resp = stub.RegistraMedico(RegistraMedicoRequest(
@@ -95,18 +106,18 @@ def main(): # Thread principal do médico
                 mytimer.tstamp_msg("MT ")
                 break
 
-            # Abre a porta para o paciente que chega
-            porta_aberta.release()
+            # Abre a porta para o paciente que chega (avisa server)
+            servico.porta_aberta.release()
 
-            # Espera registro do server (impressão dos dados do paciente na saída)
-            paciente_registrado.acquire()
+            # Espera registro do paciente no server
+            servico.paciente_registrado.acquire()
 
             # Realiza consulta
-            mytimer.tstamp_msg(f"MAI({server.id_paciente:4.1f},{server.shared_desc_problema})")
-            mytimer.mysleep(tempo)
+            mytimer.tstamp_msg(f"MAI({servico.shared_id_paciente:4.1f},{servico.shared_desc_problema})")
+            mytimer.mysleep(tempo) # Aguarda termino da consulta
 
-            # Aguarda termino da consulta para prosseguir com rotina
-            consulta_terminou.release()
+            # Notifica servidor do término da consulta depois continua rotina
+            servico.consulta_terminou.release()
             mytimer.tstamp_msg("MAF")
 
         # Fim do expediente

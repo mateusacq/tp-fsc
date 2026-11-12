@@ -280,7 +280,7 @@ def main():
 
     mytimer.tstamp_msg(f"AI({n_cadeiras},{n_medicos})@{port}")
 
-    serve(port, n_cadeiras, n_medicos)
+    serve(port, n_cadeiras, n_medicos) # Começa a servir
 
 if __name__ == "__main__":
   main()

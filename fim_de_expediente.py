@@ -22,6 +22,7 @@ def main():
 
     mytimer.tstamp_msg(f"FE({endereco},{port})")
 
+    # Abre conexão com este cliente apenas para chamar o método Termino()
     with grpc.insecure_channel(f"{endereco}:{port}") as channel:
         stub = AmbulatorioServiceStub(channel)
         resposta = stub.Termino(TerminoRequest())
