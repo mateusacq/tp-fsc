@@ -8,7 +8,7 @@ option objc_class_prefix = "HLW";
 package consultorio;
 
 service ConsultorioService {
-  rpc Consulta (ConsultaRequest) returns (ConsultaResponse) {}
+  rpc Consulta (ConsultaRequest) returns (ConsultaResponse);
 }
 
 message ConsultaRequest {

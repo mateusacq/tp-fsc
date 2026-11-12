@@ -8,13 +8,13 @@ from ambulatorio_pb2_grpc import AmbulatorioServiceStub
 def parse_args():
     args = sys.argv[1:]
     if len(args) != 2:
-        print("Uso: python fim_de_expediente.py endereco_servidor port")
+        print("Uso: python fim_de_expediente.py <endereco_servidor> <port>")
         sys.exit(1)
 
     try:
         return (args[0], int(args[1]))
     except ValueError:
-        print("Erro: dois primeiros argumentos devem ser inteiros")
+        print("Erro: argumentos devem ser dos tipos str, int")
         sys.exit(1)
 
 def main():

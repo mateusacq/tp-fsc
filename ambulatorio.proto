@@ -8,9 +8,9 @@ option objc_class_prefix = "HLW";
 package ambulatorio;
 
 service AmbulatorioService {
-  rpc ProcuraMedico (ProcuraMedicoRequest) returns (ProcuraMedicoResponse) {}
-  rpc RegistraMedico (RegistraMedicoRequest) returns (RegistraMedicoResponse) {}
-  rpc ChamaPaciente (ChamaPacienteRequest) returns (ChamaPacienteResponse) {}
+  rpc ProcuraMedico (ProcuraMedicoRequest) returns (ProcuraMedicoResponse);
+  rpc RegistraMedico (RegistraMedicoRequest) returns (RegistraMedicoResponse);
+  rpc ChamaPaciente (ChamaPacienteRequest) returns (ChamaPacienteResponse);
   rpc Termino (TerminoRequest) returns (TerminoResponse);
 }
 
