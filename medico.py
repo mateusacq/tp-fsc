@@ -84,7 +84,7 @@ def main(): # Thread principal do médico
     with grpc.insecure_channel(f"{endereco}:{porta_ambulatorio}") as channel:
         stub = ambulatorio_pb2_grpc.AmbulatorioServiceStub(channel)
         resp = stub.RegistraMedico(RegistraMedicoRequest(
-            id_medico=id_medico, porto=porta_consultorio), wait_for_ready=True)
+            id_medico=id_medico, porto=porta_consultorio))
 
         return_code = resp.return_code
         mytimer.tstamp_msg(f"MI({id_medico:4.1f}) x {tempo:3.1f} @ {porta_consultorio} = {resp.return_code}")
@@ -95,7 +95,7 @@ def main(): # Thread principal do médico
         while True:
             mytimer.tstamp_msg("MCPI")
             try:
-                resp_chama = stub.ChamaPaciente(ChamaPacienteRequest(id_medico=id_medico), wait_for_ready=True)
+                resp_chama = stub.ChamaPaciente(ChamaPacienteRequest(id_medico=id_medico))
                 mytimer.tstamp_msg(f"MCPR -> {resp_chama.id_prox_paciente:4.1f}")
             except grpc.RpcError: # Caso em que o ambulatorio fecha enquanto o medico dorme
                     mytimer.tstamp_msg("MT ")

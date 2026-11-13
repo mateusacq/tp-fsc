@@ -27,7 +27,7 @@ def main():
     # Abre conexão de cliente e procura por um médico
     with grpc.insecure_channel(f"{endereco}:{port}") as channel:
         stub = AmbulatorioServiceStub(channel)
-        resp = stub.ProcuraMedico(ProcuraMedicoRequest(id_paciente=id_paciente), wait_for_ready=True)
+        resp = stub.ProcuraMedico(ProcuraMedicoRequest(id_paciente=id_paciente))
 
         endereco = resp.end_maquina
         porto = resp.porto
