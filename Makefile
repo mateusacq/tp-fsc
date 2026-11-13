@@ -15,6 +15,6 @@ stubs: $(PROTOS)
 
 # Regra para limpar os arquivos gerados após compilação
 clean:
-	rm -f $(GENERATED)
+	rm -f $(GENERATED) *.out
 
 .PHONY: all stubs clean
